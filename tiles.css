@@ -1,0 +1,19 @@
+.ocean-tile {
+    background-color: blue;
+}
+
+.sand-tile {
+    background-color: sandybrown;
+}
+
+.grass-tile {
+    background-color: green;
+}
+
+.forest-tile {
+    background-color: darkgreen;
+}
+
+.mountain-tile {
+    background-color: rgb(30, 30, 30);
+}
