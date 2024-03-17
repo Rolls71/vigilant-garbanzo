@@ -18,6 +18,13 @@
         <button id="move-right">→</button>
         <button id="move-down">↓</button>
     </div>
+
+    <div class="panel">
+        <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <img class="tile-img" id="home" src="img/home.png" draggable="true" ondragstart="drag(event)">
+        </div>
+        <div class="slot" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    </div>
     
     <script src="app.js"></script>
 </body>
