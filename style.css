@@ -12,7 +12,7 @@ float: left;
 
 .grid-item {
 background-color: green;
-border: 1px solid rgba(0, 0, 0, 0.8);
+border: 1px solid rgb(0, 0, 0);
 width: 30px;
 height: 30px;
 text-align: center;
@@ -20,13 +20,13 @@ text-align: center;
 
 .panel {
     display: flex;
+    background-color: rgb(200,200,200);
+    margin: 10px;
+    padding: 5px; 
+    border: 1px solid rgb(0, 0, 0);
+    width: fit-content;
     flex-direction: row;
-    
-}
-
-.panel-button {
-    display: flexbox;
-    
+    gap: 5px;
 }
 
 #map {

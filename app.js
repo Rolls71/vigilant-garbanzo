@@ -6,12 +6,19 @@ const seedX = Math.random()
 const seedY = Math.random()
 var xPos = 0
 var yPos = 0
+var xPosHome = 0
+var yPosHome = 0
 
 $(onStart()); 
 
 function onStart(){
     renderMap()
 
+    $("#move-home").on('click', function(){
+        xPos = xPosHome
+        yPos = yPosHome
+        renderMap() 
+    })
     $("#move-left").on('click', function(){ xPos = xPos-1; renderMap() })
     $("#move-up").on('click', function(){ yPos = yPos-1; renderMap() })
     $("#move-right").on('click', function(){ xPos = xPos+1; renderMap() })
