@@ -24,16 +24,10 @@ function onStart(){
     })
     $("#set-home").on('click', function(){
         worldMap["home"] = worldMap["cursor"] 
+        worldMap["claims"] = []
         renderMap()
     })
-    $("#claim-tile").on('click', function(){
-        if (worldMap["claims"].toString().indexOf(
-                worldMap["cursor"].toString()) >= 0) {
-            return
-        }
-        worldMap["claims"].push(worldMap["cursor"])
-        renderMap()
-    })
+    $("#claim-tile").on('click', function(){ claimTile() })
 
     $("#move-left").on('click', function(){ xPos = xPos-1; renderMap() })
     $("#move-up").on('click', function(){ yPos = yPos-1; renderMap() })
@@ -153,6 +147,35 @@ function getTileIdFromWorld(x, y) {
     return getTileIdFromRel(...getRelFromWorldPos(x, y))
 }
 
+function getAdjacentPos(xP, yP) {
+    var x = Number(xP)
+    var y = Number(yP)
+    if (isNaN(x) || isNaN(y)) {
+        throw "Error: Position x or y is not a number"
+    }
+    return [
+        [x+1, y], 
+        [x-1, y], 
+        [x, y+1],
+        [x, y-1],
+    ]
+}
+
+function isClaimed(x, y) {
+    if (!worldMap["home"]) {
+        return false
+    }
+    if (worldMap["home"].toString() == [x, y].toString()) {
+        return true
+    }
+
+    if (worldMap["claims"].length > 0 &&
+        worldMap["claims"].toString().indexOf([x, y].toString()) >= 0) {
+        return true
+    }
+    return false
+}
+
 function getHeight(tileId) {    
     id = Number(tileId)
     if (isNaN(id)) {
@@ -179,4 +202,33 @@ function isInRange(x, y) {
         return true
     }
     return false
+}
+
+function claimTile() {
+    // Pass if no home set
+    if (!worldMap["home"]) {
+        console.log("Failed Claim: No home set")
+        return
+    }
+
+    // Pass if already claimed
+    if (isClaimed(...worldMap["cursor"])) {
+        console.log("Failed Claim: Already claimed")
+        return
+    }
+
+    // Pass if not adjacent to a claim or home
+    var neighbours = getAdjacentPos(...worldMap["cursor"])
+    for (var i = 0; i < neighbours.length; i++) {
+        if (isClaimed(...neighbours[i])) {
+            break
+        }
+        if (i+1 == neighbours.length) {
+            console.log("Failed Claim: No adjacent claims")
+            return
+        }
+    }
+
+    worldMap["claims"].push(worldMap["cursor"])
+    renderMap()
 }
