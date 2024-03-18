@@ -41,7 +41,17 @@ body {
     gap: 5px;
 }
 
+.resource-panel {
+    background-color: rgb(150,150,150);
+    margin: 2px;
+    padding: 2px; 
+}
+
 #button-panel {
+    flex-direction: row;
+}
+
+#resource-panel {
     flex-direction: row;
 }
 
@@ -55,3 +65,16 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+#food-panel {
+    border: 2px solid orange;
+}
+
+#wood-panel {
+    border: 2px solid saddlebrown;
+}
+
+#metal-panel {
+    border: 2px solid rgb(50, 50, 50);
+}
+

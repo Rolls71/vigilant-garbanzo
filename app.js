@@ -5,25 +5,26 @@ const mapScale = 1
 var xPos = 0
 var yPos = 0
 
-var worldMap = {
-    "home": [Math.floor(mapWidth/2), Math.floor(mapHeight/2)],
-    "cursor": [0, 0],
-}
+var worldMap = {}
 
 $(onStart()); 
 
 function onStart(){
     renderMap()
+    renderPanels()
 
     $("#set-home").on('click', function(){
         worldMap["home"] = worldMap["cursor"] 
         renderMap()
     })
     $("#move-home").on('click', function(){
-        xPos = worldMap["home"][0] - Math.floor(mapWidth/2)
-        yPos = worldMap["home"][1] - Math.floor(mapHeight/2)
-        renderMap() 
+        if (worldMap["home"]) {
+            xPos = worldMap["home"][0] - Math.floor(mapWidth/2)
+            yPos = worldMap["home"][1] - Math.floor(mapHeight/2)
+            renderMap() 
+        }
     })
+
     $("#move-left").on('click', function(){ xPos = xPos-1; renderMap() })
     $("#move-up").on('click', function(){ yPos = yPos-1; renderMap() })
     $("#move-right").on('click', function(){ xPos = xPos+1; renderMap() })
@@ -62,14 +63,18 @@ function renderMap() {
     })
 
 
-    if (isInRange(...worldMap["cursor"])) {
+    if (worldMap["cursor"] && isInRange(...worldMap["cursor"])) {
         $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0]
             .classList.add("cursor-tile")
     }
-    if (isInRange(...worldMap["home"])) {
+    if (worldMap["home"] && isInRange(...worldMap["home"])) {
         $("#"+getTileIdFromWorld(...worldMap["home"]))[0]
             .classList.add("home-tile")
     }
+}
+
+function renderPanels() {
+
 }
 
 function setCursor(c){
