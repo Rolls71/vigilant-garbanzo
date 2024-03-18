@@ -37,6 +37,21 @@ body {
     padding: 5px; 
     border: 1px solid rgb(0, 0, 0);
     width: fit-content;
-    flex-direction: row;
+    flex-direction: column;
     gap: 5px;
+}
+
+#button-panel {
+    flex-direction: row;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#panel-container {
+    display: flex;
+    flex-direction: column;
 }

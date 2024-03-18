@@ -9,22 +9,23 @@
     <script src='http://joeiddon.github.io/perlin/perlin.js'></script>
 </head>
 <body>
+<div id="game-container">
     <div class="grid-container" id="map"></div>
+    <div id="panel-container">
+        <div class="panel" id="button-panel">
+            <button id="move-home">⌂</button>
+            <button id="move-left">←</button>
+            <button id="move-up">↑</button>
+            <button id="move-right">→</button>
+            <button id="move-down">↓</button>
+        </div>
 
-    <div class="panel">
-        <button id="move-home">⌂</button>
-        <button id="move-left">←</button>
-        <button id="move-up">↑</button>
-        <button id="move-right">→</button>
-        <button id="move-down">↓</button>
+        <div class="panel">
+            <h2 id="selected-tile">Selected Tile: </h2>
+            <button id="set-home">Set Home</button>
+        </div>
     </div>
-
-    <div class="panel">
-        <h2 id="selected-tile">Selected Tile: </h2>
-        <button id="set-home">Set Home</button>
-
-    </div>
-    
-    <script src="app.js"></script>
+</div>
+<script src="app.js"></script>
 </body>
 </html>
