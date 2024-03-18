@@ -36,6 +36,10 @@ function renderMap() {
         var y = Math.floor(i/mapWidth) + seedY + yPos
         var v = perlin.get(x/mapWidth, y/mapHeight)
         map.append('<div class="grid-tile" id="'+i+'">'+v+'</div>')
+        $("#"+i).on('click', function(c){
+            worldMap['cursor'] = [...getPosFromId(c.target.id)] 
+            renderMap()
+        })
     }
 
     $(".grid-tile").map(function() {
@@ -59,17 +63,16 @@ function renderMap() {
 
 
     if (isInRange(...worldMap["cursor"])) {
-        console.log(...worldMap["cursor"])
-        console.log(getTileIdFromWorld(...worldMap["cursor"]))
-        console.log($("#"+getTileIdFromWorld(...worldMap["cursor"])))
         $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0].classList.add("cursor")
     }
 }
 
-function getPosFromRel(tileId) {
+function getPosFromId(tileId) {
     id = Number(tileId)
     if (id == NaN) {
-        throw "Error: Tile id is not a number"
+        throw "Error: Tile ID "+id+"is not a number"
+    } else if (id >= mapSize || id < 0) {
+        throw "Error: ID not within range"
     }
     x = id%mapWidth
     y = Math.floor(id/mapHeight)
