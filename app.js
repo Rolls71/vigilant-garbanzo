@@ -2,8 +2,6 @@ const mapWidth = 16
 const mapHeight = 16
 const mapSize = mapWidth*mapHeight
 const mapScale = 1
-const seedX = Math.random()
-const seedY = Math.random()
 var xPos = 0
 var yPos = 0
 
@@ -37,8 +35,8 @@ function renderMap() {
     var map = $("#map")
     map.empty()
     for (var i = 0; i < 256; i++) {
-        var x = i%mapWidth + seedX + xPos
-        var y = Math.floor(i/mapWidth) + seedY + yPos
+        var x = i%mapWidth + xPos
+        var y = Math.floor(i/mapWidth) + yPos
         var v = perlin.get(x/mapWidth, y/mapHeight)
         map.append('<div class="grid-tile" id="'+i+'">'+v+'</div>')
         $("#"+i).on('click', function(c){ setCursor(c) })
@@ -66,11 +64,11 @@ function renderMap() {
 
     if (isInRange(...worldMap["cursor"])) {
         $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0]
-            .classList.add("cursor")
+            .classList.add("cursor-tile")
     }
     if (isInRange(...worldMap["home"])) {
         $("#"+getTileIdFromWorld(...worldMap["home"]))[0]
-            .classList.add("home")
+            .classList.add("home-tile")
     }
 }
 
@@ -141,8 +139,8 @@ function getHeight(tileId) {
     if (isNaN(id)) {
         throw "Error: Tile id is not a number"
     }
-    var x = id%mapWidth + seedX + xPos
-    var y = Math.floor(id/mapWidth) + seedY + yPos
+    var x = id%mapWidth + xPos
+    var y = Math.floor(id/mapWidth) + yPos
     var v = perlin.get(x/mapWidth, y/mapHeight)
 }
 
