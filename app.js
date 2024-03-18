@@ -17,6 +17,9 @@ $(onStart());
 function onStart(){
     renderMap()
 
+    $("#set-home").on('click', function(){
+        worldMap["home"] = worldMap["cursor"] 
+    })
     $("#move-home").on('click', function(){
         xPos = worldMap["home"][0]
         yPos = worldMap["home"][1]
@@ -26,6 +29,7 @@ function onStart(){
     $("#move-up").on('click', function(){ yPos = yPos-1; renderMap() })
     $("#move-right").on('click', function(){ xPos = xPos+1; renderMap() })
     $("#move-down").on('click', function(){ yPos = yPos+1; renderMap() })
+
 }
 
 function renderMap() {
@@ -36,10 +40,7 @@ function renderMap() {
         var y = Math.floor(i/mapWidth) + seedY + yPos
         var v = perlin.get(x/mapWidth, y/mapHeight)
         map.append('<div class="grid-tile" id="'+i+'">'+v+'</div>')
-        $("#"+i).on('click', function(c){
-            worldMap['cursor'] = [...getPosFromId(c.target.id)] 
-            renderMap()
-        })
+        $("#"+i).on('click', function(c){ setCursor(c) })
     }
 
     $(".grid-tile").map(function() {
@@ -68,7 +69,13 @@ function renderMap() {
     }
 }
 
-function getPosFromId(tileId) {
+function setCursor(c){
+    worldMap['cursor'] = [...getWorldPosFromId(c.target.id)] 
+    $("#selected-tile").text("Selected Tile: "+c.target.classList)
+    renderMap()
+}
+
+function getRelPosFromId(tileId) {
     id = Number(tileId)
     if (id == NaN) {
         throw "Error: Tile ID "+id+"is not a number"
@@ -77,6 +84,19 @@ function getPosFromId(tileId) {
     }
     x = id%mapWidth
     y = Math.floor(id/mapHeight)
+    return [x, y]
+}
+
+function getWorldPosFromId(tileId) {
+    return getWorldPosFromRel(...getRelPosFromId(tileId))
+}
+
+function getWorldPosFromRel(xRel, yRel) {
+    var x = Number(xRel) + xPos
+    var y = Number(yRel) + yPos
+    if (isNaN(x) || isNaN(y)) {
+        throw "Error: Position x or y is not a number"
+    }
     return [x, y]
 }
 
