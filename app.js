@@ -8,7 +8,7 @@ var xPos = 0
 var yPos = 0
 
 var worldMap = {
-    "home": [0, 0],
+    "home": [Math.floor(mapWidth/2), Math.floor(mapHeight/2)],
     "cursor": [0, 0],
 }
 
@@ -19,10 +19,11 @@ function onStart(){
 
     $("#set-home").on('click', function(){
         worldMap["home"] = worldMap["cursor"] 
+        renderMap()
     })
     $("#move-home").on('click', function(){
-        xPos = worldMap["home"][0]
-        yPos = worldMap["home"][1]
+        xPos = worldMap["home"][0] - Math.floor(mapWidth/2)
+        yPos = worldMap["home"][1] - Math.floor(mapHeight/2)
         renderMap() 
     })
     $("#move-left").on('click', function(){ xPos = xPos-1; renderMap() })
@@ -66,6 +67,10 @@ function renderMap() {
     if (isInRange(...worldMap["cursor"])) {
         $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0]
             .classList.add("cursor")
+    }
+    if (isInRange(...worldMap["home"])) {
+        $("#"+getTileIdFromWorld(...worldMap["home"]))[0]
+            .classList.add("home")
     }
 }
 

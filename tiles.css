@@ -21,3 +21,7 @@
 .cursor {
     border: 2px solid gold;
 }
+
+.home {
+    background-image: url("img/home.png");
+}

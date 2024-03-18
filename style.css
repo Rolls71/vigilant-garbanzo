@@ -29,11 +29,6 @@ body {
     background-color: rgb(50, 50, 50);
 }
 
-.tile-img {
-    width: 30px;
-    height: 30px;
-}
-
 .panel {
     display: flex;
     background-color: rgb(200,200,200);
