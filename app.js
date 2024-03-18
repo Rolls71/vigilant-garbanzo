@@ -63,7 +63,8 @@ function renderMap() {
 
 
     if (isInRange(...worldMap["cursor"])) {
-        $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0].classList.add("cursor")
+        $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0]
+            .classList.add("cursor")
     }
 }
 

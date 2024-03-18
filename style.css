@@ -3,19 +3,22 @@ body {
 }
 
 .grid-container {
-display: grid;
-width: fit-content;
-grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
-padding: 10px;
-float: left;
+    display: grid;
+    width: fit-content;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
+    padding: 10px;
+    float: left;
+    background-color:saddlebrown;
+
 }
 
 .grid-tile {
-background-color: green;
-border: 1px solid rgb(0, 0, 0);
-width: 30px;
-height: 30px;
-text-align: center;
+    background-color: green;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    box-sizing: border-box;
+    border: 1px solid rgb(0, 0, 0);
 }
 
 .slot {
@@ -39,8 +42,4 @@ text-align: center;
     width: fit-content;
     flex-direction: row;
     gap: 5px;
-}
-
-#map {
-    background-color:saddlebrown;
 }
