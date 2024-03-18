@@ -10,7 +10,7 @@ padding: 10px;
 float: left;
 }
 
-.grid-item {
+.grid-tile {
 background-color: green;
 border: 1px solid rgb(0, 0, 0);
 width: 30px;

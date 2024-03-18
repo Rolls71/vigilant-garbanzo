@@ -17,3 +17,9 @@
 .mountain-tile {
     background-color: rgb(30, 30, 30);
 }
+
+.cursor {
+    width: 28px;
+    height: 28px;
+    border: 2px solid gold;
+}
