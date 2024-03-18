@@ -5,7 +5,9 @@ const mapScale = 1
 var xPos = 0
 var yPos = 0
 
-var worldMap = {}
+var worldMap = {
+    "claims": [],
+}
 
 $(onStart()); 
 
@@ -13,16 +15,24 @@ function onStart(){
     renderMap()
     renderPanels()
 
-    $("#set-home").on('click', function(){
-        worldMap["home"] = worldMap["cursor"] 
-        renderMap()
-    })
     $("#move-home").on('click', function(){
         if (worldMap["home"]) {
             xPos = worldMap["home"][0] - Math.floor(mapWidth/2)
             yPos = worldMap["home"][1] - Math.floor(mapHeight/2)
             renderMap() 
         }
+    })
+    $("#set-home").on('click', function(){
+        worldMap["home"] = worldMap["cursor"] 
+        renderMap()
+    })
+    $("#claim-tile").on('click', function(){
+        if (worldMap["claims"].toString().indexOf(
+                worldMap["cursor"].toString()) >= 0) {
+            return
+        }
+        worldMap["claims"].push(worldMap["cursor"])
+        renderMap()
     })
 
     $("#move-left").on('click', function(){ xPos = xPos-1; renderMap() })
@@ -71,10 +81,14 @@ function renderMap() {
         $("#"+getTileIdFromWorld(...worldMap["home"]))[0]
             .classList.add("home-tile")
     }
+    for (var i = 0; i < worldMap["claims"].length; i++) {
+        $("#"+getTileIdFromWorld(...worldMap["claims"][i]))[0]
+        .classList.add("claimed-tile")
+    }
 }
 
 function renderPanels() {
-
+    
 }
 
 function setCursor(c){

@@ -27,3 +27,7 @@
 .home-tile {
     background-image: url("img/home.png");
 }
+
+.claimed-tile {
+    background-image: url("img/claim.png")
+}

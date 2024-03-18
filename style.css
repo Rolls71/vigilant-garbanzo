@@ -67,14 +67,14 @@ body {
 }
 
 #food-panel {
-    border: 2px solid orange;
+    border: 2px solid green;
 }
 
-#wood-panel {
-    border: 2px solid saddlebrown;
+#production-panel {
+    border: 2px solid red;
 }
 
-#metal-panel {
-    border: 2px solid rgb(50, 50, 50);
+#gold-panel {
+    border: 2px solid gold;
 }
 
