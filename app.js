@@ -9,6 +9,14 @@ var worldMap = {
     "claims": [],
 }
 
+var tileYields = {
+    "ocean-tile": [1, 0, 1],
+    "sand-tile": [0, 0, 1],
+    "grass-tile": [2, 0, 0],
+    "forest-tile": [1, 1, 0],
+    "mountain-tile": [0, 2, 1],
+}
+
 $(onStart()); 
 
 function onStart(){
@@ -82,12 +90,24 @@ function renderMap() {
 }
 
 function renderPanels() {
-    
+
 }
 
 function setCursor(c){
     worldMap['cursor'] = [...getWorldPosFromId(c.target.id)] 
     $("#selected-tile").text("Selected Tile: "+c.target.classList)
+
+    var yields = [0, 0, 0]
+    $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
+        if (tileYields[e]) {
+            yields = yields.map(function(num, i) {
+                return num + tileYields[e][i]
+            })
+        }
+    })
+    $("#tile-yields").text("Yields "+yields[0]+" food, "
+        +yields[1]+" production, and "+yields[2]+" gold.")
+
     renderMap()
 }
 
