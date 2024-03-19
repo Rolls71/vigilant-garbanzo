@@ -5,6 +5,10 @@ const mapScale = 1
 var xPos = 0
 var yPos = 0
 
+var foodCount = 0
+var productionCount = 0
+var goldCount = 0
+
 var worldMap = {
     "claims": [],
 }
@@ -90,7 +94,9 @@ function renderMap() {
 }
 
 function renderPanels() {
-
+    $("#food-panel").text(foodCount+" Food")
+    $("#production-panel").text(productionCount+" Production")
+    $("#gold-panel").text(goldCount+" Gold")
 }
 
 function setCursor(c){
@@ -251,4 +257,17 @@ function claimTile() {
 
     worldMap["claims"].push(worldMap["cursor"])
     renderMap()
+
+    var yields = [0, 0, 0]
+    $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
+        if (tileYields[e]) {
+            yields = yields.map(function(num, i) {
+                return num + tileYields[e][i]
+            })
+        }
+    })
+    foodCount += yields[0]
+    productionCount += yields[1]
+    goldCount += yields[2]
+    renderPanels()
 }
