@@ -41,6 +41,10 @@ function onStart(){
     $("#set-home").on('click', function(){
         worldMap["home"] = worldMap["cursor"] 
         worldMap["claims"] = []
+        foodYield += 1
+        productionCount += 1
+        productionYield += 1
+        goldCount += 1
         renderMap()
         renderPanels()
     })
@@ -114,18 +118,20 @@ function renderPanels() {
     }
     var tile = tiles[0]
 
-    if (tile.classList.contains("claimed-tile")) {
-        $("#claim-tile")[0].hidden = true
-    } else {
-        $("#claim-tile")[0].hidden = false
-    }
+    $("#set-home")[0].hidden = false
+    $("#claim-tile")[0].hidden = false
 
     if (tile.classList.contains("home-tile")) {
         $("#set-home")[0].hidden = true
         $("#claim-tile")[0].hidden = true
-    } else {
-        $("#set-home")[0].hidden = false
     }
+    if (tile.classList.contains("ocean-tile")) {
+        $("#set-home")[0].hidden = true
+    }
+    if (tile.classList.contains("claimed-tile")) {
+        $("#claim-tile")[0].hidden = true
+    }
+
 }
 
 function tick() {
@@ -303,6 +309,7 @@ function claimTile() {
         }
     })
     foodYield += yields[0]
+    productionCount += yields[1]
     productionYield += yields[1]
     goldCount += yields[2]
     renderPanels()
