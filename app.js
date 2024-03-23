@@ -9,6 +9,9 @@ var foodCount = 0
 var productionCount = 0
 var goldCount = 0
 
+var foodYield = 0
+var productionYield = 0
+
 var worldMap = {
     "claims": [],
 }
@@ -32,20 +35,23 @@ function onStart(){
             xPos = worldMap["home"][0] - Math.floor(mapWidth/2)
             yPos = worldMap["home"][1] - Math.floor(mapHeight/2)
             renderMap() 
+            renderPanels()
         }
     })
     $("#set-home").on('click', function(){
         worldMap["home"] = worldMap["cursor"] 
         worldMap["claims"] = []
         renderMap()
+        renderPanels()
     })
-    $("#claim-tile").on('click', function(){ claimTile() })
+    $("#claim-tile").on('click', function(){ claimTile(); renderPanels() })
 
-    $("#move-left").on('click', function(){ xPos = xPos-1; renderMap() })
-    $("#move-up").on('click', function(){ yPos = yPos-1; renderMap() })
-    $("#move-right").on('click', function(){ xPos = xPos+1; renderMap() })
-    $("#move-down").on('click', function(){ yPos = yPos+1; renderMap() })
+    $("#move-left").on('click', function(){ xPos = xPos-1; renderMap(); renderPanels() })
+    $("#move-up").on('click', function(){ yPos = yPos-1; renderMap(); renderPanels() })
+    $("#move-right").on('click', function(){ xPos = xPos+1; renderMap(); renderPanels() })
+    $("#move-down").on('click', function(){ yPos = yPos+1; renderMap(); renderPanels() })
 
+    window.setInterval(function(){ tick() }, 1000)
 }
 
 function renderMap() {
@@ -88,15 +94,44 @@ function renderMap() {
             .classList.add("home-tile")
     }
     for (var i = 0; i < worldMap["claims"].length; i++) {
-        $("#"+getTileIdFromWorld(...worldMap["claims"][i]))[0]
-        .classList.add("claimed-tile")
+        try {
+            $("#"+getTileIdFromWorld(...worldMap["claims"][i]))[0]
+                .classList.add("claimed-tile")
+        } catch {
+            continue
+        }
     }
 }
 
 function renderPanels() {
-    $("#food-panel").text(foodCount+" Food")
-    $("#production-panel").text(productionCount+" Production")
+    $("#food-panel").text(foodCount+" Food (+"+foodYield+")")
+    $("#production-panel").text(productionCount+"/"+productionYield+" Production")
     $("#gold-panel").text(goldCount+" Gold")
+
+    var tiles = $(".cursor-tile")
+    if (tiles.length != 1) {
+        return
+    }
+    var tile = tiles[0]
+
+    if (tile.classList.contains("claimed-tile")) {
+        $("#claim-tile")[0].hidden = true
+    } else {
+        $("#claim-tile")[0].hidden = false
+    }
+
+    if (tile.classList.contains("home-tile")) {
+        $("#set-home")[0].hidden = true
+        $("#claim-tile")[0].hidden = true
+    } else {
+        $("#set-home")[0].hidden = false
+    }
+}
+
+function tick() {
+    foodCount += foodYield
+
+    renderPanels()
 }
 
 function setCursor(c){
@@ -115,6 +150,7 @@ function setCursor(c){
         +yields[1]+" production, and "+yields[2]+" gold.")
 
     renderMap()
+    renderPanels()
 }
 
 function getRelPosFromId(tileId) {
@@ -266,8 +302,8 @@ function claimTile() {
             })
         }
     })
-    foodCount += yields[0]
-    productionCount += yields[1]
+    foodYield += yields[0]
+    productionYield += yields[1]
     goldCount += yields[2]
     renderPanels()
 }
