@@ -96,7 +96,7 @@ function renderMap() {
 }
 
 function renderPanels() {
-    $("#food-panel").text(foodCount+" Food (+"+foodProduction()+")")
+    $("#food-panel").text(foodCount+" Food (+"+foodYield+")")
     $("#production-panel").text(productionCount+"/"+productionYield+" Production")
     $("#gold-panel").text(goldCount+" Gold")
 
@@ -124,8 +124,10 @@ function renderPanels() {
         $("#increase-production").show()
         $("#decrease-production").show()
 
-        //$("#settlement-stats").html("Productivity: "+settlementProduction
-        //    +"<br>Range: "+settlementRange)
+        var pos = getWorldPosFromId(tile.id)
+        var i = settlements.position.indexOf(pos)
+        $("#settlement-stats").html("Productivity: "+settlements["productivity"][i]
+            +"<br>Range: "+settlements["range"][i])
     }
     if (tile.classList.contains("ocean-tile")) {
         $("#settle").hide()
@@ -332,6 +334,7 @@ function settle() {
     settlements["productivity"].push(startProductivity)
     settlements["range"].push(startRange)
     worldMap["home"] = worldMap["cursor"]
+    
 }
 
 function claimTile() {
@@ -393,15 +396,13 @@ function modifyProduction(v) {
         console.log("Failed modify: Too much production or none left")
         return
     }
+
+    var tile = worldMap["cursor"]
+    var id = getTileIdFromWorld(tile)
     productionCount -= v
-    settlementProduction += v
-    settlementRange += v
+    settlements["productivity"][id] += v
+    settlement["range"][id] += v
 
-}
-
-function foodProduction() {
-    // TODO: needs to sum all food yields
-    return foodYield * settlementProduction
 }
 
 function settlementCost() {
