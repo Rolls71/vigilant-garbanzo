@@ -136,8 +136,8 @@ function renderPanels() {
         $("#increase-production").show()
         $("#decrease-production").show()
 
-        $("#settlement-stats").text("Production: "+settlementProduction
-            +"\nRange: "+settlementRange)
+        $("#settlement-stats").html("Productivity: "+settlementProduction
+            +"<br>Range: "+settlementRange)
     }
     if (tile.classList.contains("ocean-tile")) {
         $("#settle").hide()
