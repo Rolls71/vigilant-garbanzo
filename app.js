@@ -9,6 +9,9 @@ var foodCount = 0
 var productionCount = 0
 var goldCount = 0
 
+var foodCost = 10
+var goldCost = 0
+
 var foodYield = 0
 var productionYield = 0
 
@@ -17,11 +20,11 @@ var worldMap = {
 }
 
 var tileYields = {
-    "ocean-tile": [1, 0, 1],
-    "sand-tile": [0, 0, 1],
-    "grass-tile": [2, 0, 0],
-    "forest-tile": [1, 1, 0],
-    "mountain-tile": [0, 2, 1],
+    "ocean-tile": [1, 0, 2, 1],
+    "sand-tile": [0, 0, 1, 0],
+    "grass-tile": [2, 0, 0, 0],
+    "forest-tile": [1, 1, 0, 1],
+    "mountain-tile": [0, 3, 1, 2],
 }
 
 $(onStart()); 
@@ -41,10 +44,9 @@ function onStart(){
     $("#set-home").on('click', function(){
         worldMap["home"] = worldMap["cursor"] 
         worldMap["claims"] = []
-        foodYield += 1
-        productionCount += 1
-        productionYield += 1
-        goldCount += 1
+        foodYield = 1
+        productionCount = 0
+        productionYield = 0
         renderMap()
         renderPanels()
     })
@@ -114,9 +116,12 @@ function renderPanels() {
 
     var tiles = $(".cursor-tile")
     if (tiles.length != 1) {
+        $("#set-home")[0].hidden = true
+        $("#claim-tile")[0].hidden = true
         return
     }
     var tile = tiles[0]
+
 
     $("#set-home")[0].hidden = false
     $("#claim-tile")[0].hidden = false
@@ -132,6 +137,7 @@ function renderPanels() {
         $("#claim-tile")[0].hidden = true
     }
 
+
 }
 
 function tick() {
@@ -144,7 +150,7 @@ function setCursor(c){
     worldMap['cursor'] = [...getWorldPosFromId(c.target.id)] 
     $("#selected-tile").text("Selected Tile: "+c.target.classList)
 
-    var yields = [0, 0, 0]
+    var yields = [0, 0, 0, 0]
     $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
         if (tileYields[e]) {
             yields = yields.map(function(num, i) {
@@ -152,6 +158,9 @@ function setCursor(c){
             })
         }
     })
+
+    goldCost = yields[3]
+    $("#claim-tile").text("Claim "+goldCost+" Gold, "+foodCost+" Food")
     $("#tile-yields").text("Yields "+yields[0]+" food, "
         +yields[1]+" production, and "+yields[2]+" gold.")
 
@@ -297,6 +306,12 @@ function claimTile() {
         }
     }
 
+    // Pass if lacking necessary resources
+    if (foodCount < foodCost || goldCount < goldCost) {
+        console.log("Failed Claim: Lacking necessary resources")
+        return
+    }
+
     worldMap["claims"].push(worldMap["cursor"])
     renderMap()
 
@@ -308,6 +323,11 @@ function claimTile() {
             })
         }
     })
+
+    goldCount -= goldCost
+    foodCount -= foodCost
+    foodCost *= 2
+
     foodYield += yields[0]
     productionCount += yields[1]
     productionYield += yields[1]
