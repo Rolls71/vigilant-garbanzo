@@ -2,6 +2,10 @@ const mapWidth = 16
 const mapHeight = 16
 const mapSize = mapWidth*mapHeight
 const mapScale = 1
+
+const startProductivity = 1
+const startRange = 3
+
 var xPos = 0
 var yPos = 0
 
@@ -15,21 +19,26 @@ var goldCost = 0
 var foodYield = 0
 var productionYield = 0
 
-var settlementProduction = 1
-var settlementRange = 5
 //TODO: separate claim and build range
+
+var settlements = {
+    "position": [],
+    "productivity": [],
+    "range": [],
+}
 
 var worldMap = {
     "claims": [],
 }
 
+// Food, Production, Gold, Gold Cost
 var tileYields = {
     "ocean-tile": [1, 0, 2, 1],
     "sand-tile": [0, 0, 1, 0],
     "grass-tile": [2, 0, 0, 0],
     "forest-tile": [1, 1, 0, 1],
     "mountain-tile": [0, 3, 1, 2],
-}
+} 
 
 $(onStart()); 
 
@@ -46,7 +55,7 @@ function onStart(){
         }
     })
     $("#settle").on('click', function(){ settle(); renderMap(); renderPanels() })
-    $("#claim-tile").on('click', function(){ claimTile(); renderPanels() })
+    $("#claim-tile").on('click', function(){ claimTile(); renderMap(); renderPanels() })
     $("#increase-production").on('click', function(){ modifyProduction(1); renderPanels() })
     $("#decrease-production").on('click', function(){ modifyProduction(-1); renderPanels() })
 
@@ -64,37 +73,16 @@ function renderMap() {
     for (var i = 0; i < 256; i++) {
         var x = i%mapWidth + xPos
         var y = Math.floor(i/mapWidth) + yPos
-        var v = perlin.get(x/mapWidth, y/mapHeight)
-        map.append('<div class="grid-tile" id="'+i+'">'+v+'</div>')
+        map.append('<div class="grid-tile '+getTerrainFromPos(x, y)+'" id="'+i+'"></div>')
         $("#"+i).on('click', function(c){ setCursor(c) })
     }
 
-    $(".grid-tile").map(function() {
-        this.className = ""
-        this.classList.add("grid-tile")
-
-        const n = Number(this.innerHTML)
-        if (n < -0.1) {
-            this.classList.add("ocean-tile")
-        } else if (n <= 0) {
-            this.classList.add("sand-tile")
-        } else if (n <= 0.2) {
-            this.classList.add("grass-tile")
-        } else if (n <= 0.4) {
-            this.classList.add("forest-tile")
-        } else if (n <= 1) {
-            this.classList.add("mountain-tile")
-        } 
-        this.innerHTML = ""
-    })
-
-
-    if (worldMap["cursor"] && isInRange(...worldMap["cursor"])) {
+    if (worldMap["cursor"] && isOnScreen(...worldMap["cursor"])) {
         $("#"+getTileIdFromWorld(...worldMap["cursor"]))[0]
             .classList.add("cursor-tile")
     }
-    if (worldMap["home"] && isInRange(...worldMap["home"])) {
-        $("#"+getTileIdFromWorld(...worldMap["home"]))[0]
+    for (var i = 0; i < settlements["position"].length; i++) {
+        $("#"+getTileIdFromWorld(...settlements["position"][i]))[0]
             .classList.add("home-tile")
     }
     for (var i = 0; i < worldMap["claims"].length; i++) {
@@ -136,8 +124,8 @@ function renderPanels() {
         $("#increase-production").show()
         $("#decrease-production").show()
 
-        $("#settlement-stats").html("Productivity: "+settlementProduction
-            +"<br>Range: "+settlementRange)
+        //$("#settlement-stats").html("Productivity: "+settlementProduction
+        //    +"<br>Range: "+settlementRange)
     }
     if (tile.classList.contains("ocean-tile")) {
         $("#settle").hide()
@@ -150,9 +138,35 @@ function renderPanels() {
 }
 
 function tick() {
-    foodCount += foodYield * settlementProduction
-
+    foodYield = settlements["position"].length
+    productionYield = 0
+    for (var i = 0; i < worldMap["claims"].length; i++) {
+        var highestProductivity = 0
+        for (var j = 0; j < settlements["position"].length; j++) {
+            if (isInRange(
+                ...worldMap["claims"][i], 
+                ...settlements["position"][j], 
+                settlements["range"][j]
+                ) && settlements["productivity"][j] > highestProductivity) {
+                    highestProductivity = settlements["productivity"][j]
+                }
+        }
+        // if (highestProductivity == 0) {
+        //     throw "Error: claim with 0 productivity."
+        // } else {
+            var terrain = getTerrainFromPos(...worldMap["claims"][i])
+            foodYield += tileYields[terrain][0]
+            productionYield += tileYields[terrain][1]
+        // }
+        // if productivity = 0, throw error, delete claim
+        // else multiply food yield with productivity and add to count
+    }
+    foodCount += foodYield
     renderPanels()
+}
+
+function isInRange(x1, y1, x2, y2, range) {
+    return (Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) ) <= range)
 }
 
 function setCursor(c){
@@ -170,7 +184,7 @@ function setCursor(c){
 
     goldCost = yields[3]
     $("#claim-tile").text("Claim "+goldCost+" Gold, "+foodCost+" Food")
-    $("#settle").text("Settle "+goldCost+" Gold")
+    $("#settle").text("Settle "+settlementCost()+" Gold")
     $("#tile-yields").text("Yields "+yields[0]+" food, "
         +yields[1]+" production, and "+yields[2]+" gold.")
 
@@ -273,7 +287,22 @@ function getHeight(tileId) {
     var v = perlin.get(x/mapWidth, y/mapHeight)
 }
 
-function isInRange(x, y) {
+function getTerrainFromPos(x, y) {
+    var n = perlin.get(x/mapWidth, y/mapHeight)
+    if (n < -0.1) {
+        return "ocean-tile"
+    } else if (n <= 0) {
+        return "sand-tile"
+    } else if (n <= 0.2) {
+        return "grass-tile"
+    } else if (n <= 0.4) {
+        return "forest-tile"
+    } else if (n <= 1) {
+        return "mountain-tile"
+    } 
+}
+
+function isOnScreen(x, y) {
     var x = Number(x)
     var y = Number(y)
     if (isNaN(x) || isNaN(y)) {
@@ -293,17 +322,16 @@ function isInRange(x, y) {
 
 function settle() {
     // Pass if lacking necessary resources
-    if (goldCount < goldCost) {
+    if (goldCount < settlementCost()) {
         console.log("Failed Claim: Lacking necessary resources")
         return
     }
-
-    worldMap["home"] = worldMap["cursor"] 
-    worldMap["claims"] = []
-    foodYield = 1
-    productionCount = 0
-    productionYield = 0
-    goldCount -= goldCost
+    goldCount -= settlementCost()
+    
+    settlements["position"].push(worldMap["cursor"])
+    settlements["productivity"].push(startProductivity)
+    settlements["range"].push(startRange)
+    worldMap["home"] = worldMap["cursor"]
 }
 
 function claimTile() {
@@ -338,7 +366,6 @@ function claimTile() {
     }
 
     worldMap["claims"].push(worldMap["cursor"])
-    renderMap()
 
     var yields = [0, 0, 0]
     $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
@@ -375,4 +402,8 @@ function modifyProduction(v) {
 function foodProduction() {
     // TODO: needs to sum all food yields
     return foodYield * settlementProduction
+}
+
+function settlementCost() {
+    return goldCost + Math.pow(settlements["position"].length, 2)
 }
