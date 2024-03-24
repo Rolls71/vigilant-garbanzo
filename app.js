@@ -125,7 +125,13 @@ function renderPanels() {
         $("#decrease-production").show()
 
         var pos = getWorldPosFromId(tile.id)
-        var i = settlements.position.indexOf(pos)
+        var i
+        for (i = 0; i < settlements["position"].length; i++) {
+            if (settlements["position"][i][0] == pos[0]
+                && settlements["position"][i][1] == pos[1]) {
+                    break
+            }
+        }
         $("#settlement-stats").html("Productivity: "+settlements["productivity"][i]
             +"<br>Range: "+settlements["range"][i])
     }
@@ -153,20 +159,23 @@ function tick() {
                     highestProductivity = settlements["productivity"][j]
                 }
         }
-        // if (highestProductivity == 0) {
-        //     throw "Error: claim with 0 productivity."
-        // } else {
+        if (highestProductivity == 0) {
+            throw "Error: claim with 0 productivity."
+        } else {
             var terrain = getTerrainFromPos(...worldMap["claims"][i])
             foodYield += tileYields[terrain][0]
             productionYield += tileYields[terrain][1]
-        // }
-        // if productivity = 0, throw error, delete claim
-        // else multiply food yield with productivity and add to count
+        }
     }
     foodCount += foodYield
     renderPanels()
 }
 
+function isInSettlementRange(i, x, y) {
+    return isInRange(
+        ...settlements["position"][i], x, y, settlements["range"][i]
+    )
+}
 function isInRange(x1, y1, x2, y2, range) {
     return (Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) ) <= range)
 }
@@ -265,13 +274,12 @@ function getAdjacentPos(xP, yP) {
 }
 
 function isClaimed(x, y) {
-    if (!worldMap["home"]) {
-        return false
-    }
-    if (worldMap["home"].toString() == [x, y].toString()) {
+    console.log(settlements["position"].toString(), [x, y].toString())
+    if (settlements["position"].toString().indexOf([x, y].toString()) >= 0) {
         return true
     }
 
+    console.log(worldMap["claims"].toString(), [x, y].toString())
     if (worldMap["claims"].length > 0 &&
         worldMap["claims"].toString().indexOf([x, y].toString()) >= 0) {
         return true
@@ -368,6 +376,17 @@ function claimTile() {
         return
     }
 
+    // Pass if out of range of settlements
+    for (var i = 0; i < settlements["position"].length; i++) {
+        if (isInSettlementRange(i, ...worldMap["cursor"])) {
+            break
+        }
+        if (i+1 == settlements["position"].length) {
+            console.log("Failed Claim: No settlement in range")
+            return
+        }
+    }
+
     worldMap["claims"].push(worldMap["cursor"])
 
     var yields = [0, 0, 0]
@@ -398,10 +417,10 @@ function modifyProduction(v) {
     }
 
     var tile = worldMap["cursor"]
-    var id = getTileIdFromWorld(tile)
+    var id = getTileIdFromWorld(...tile)
     productionCount -= v
     settlements["productivity"][id] += v
-    settlement["range"][id] += v
+    settlements["range"][id] += v
 
 }
 
