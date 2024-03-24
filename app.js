@@ -124,16 +124,9 @@ function renderPanels() {
         $("#increase-production").show()
         $("#decrease-production").show()
 
-        var pos = getWorldPosFromId(tile.id)
-        var i
-        for (i = 0; i < settlements["position"].length; i++) {
-            if (settlements["position"][i][0] == pos[0]
-                && settlements["position"][i][1] == pos[1]) {
-                    break
-            }
-        }
-        $("#settlement-stats").html("Productivity: "+settlements["productivity"][i]
-            +"<br>Range: "+settlements["range"][i])
+        var id = getSettlementFromTileId(tile.id)
+        $("#settlement-stats").html("Productivity: "+settlements["productivity"][id]
+            +"<br>Range: "+settlements["range"][id])
     }
     if (tile.classList.contains("ocean-tile")) {
         $("#settle").hide()
@@ -163,7 +156,7 @@ function tick() {
             throw "Error: claim with 0 productivity."
         } else {
             var terrain = getTerrainFromPos(...worldMap["claims"][i])
-            foodYield += tileYields[terrain][0]
+            foodYield += tileYields[terrain][0]*highestProductivity
             productionYield += tileYields[terrain][1]
         }
     }
@@ -274,12 +267,10 @@ function getAdjacentPos(xP, yP) {
 }
 
 function isClaimed(x, y) {
-    console.log(settlements["position"].toString(), [x, y].toString())
     if (settlements["position"].toString().indexOf([x, y].toString()) >= 0) {
         return true
     }
 
-    console.log(worldMap["claims"].toString(), [x, y].toString())
     if (worldMap["claims"].length > 0 &&
         worldMap["claims"].toString().indexOf([x, y].toString()) >= 0) {
         return true
@@ -310,6 +301,18 @@ function getTerrainFromPos(x, y) {
     } else if (n <= 1) {
         return "mountain-tile"
     } 
+}
+
+function getSettlementFromTileId(id) {
+    var pos = getWorldPosFromId(id)
+    var i
+    for (i = 0; i < settlements["position"].length; i++) {
+        if (settlements["position"][i][0] == pos[0]
+            && settlements["position"][i][1] == pos[1]) {
+                break
+        }
+    }
+    return i
 }
 
 function isOnScreen(x, y) {
@@ -416,11 +419,11 @@ function modifyProduction(v) {
         return
     }
 
-    var tile = worldMap["cursor"]
-    var id = getTileIdFromWorld(...tile)
+    var tileId = getTileIdFromWorld(...worldMap["cursor"])
+    var settlementId = getSettlementFromTileId(tileId)
     productionCount -= v
-    settlements["productivity"][id] += v
-    settlements["range"][id] += v
+    settlements["productivity"][settlementId] += v
+    settlements["range"][settlementId] += v
 
 }
 
