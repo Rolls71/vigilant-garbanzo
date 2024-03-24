@@ -1,10 +1,12 @@
-const mapWidth = 16
-const mapHeight = 16
-const mapSize = mapWidth*mapHeight
-const mapScale = 1
+const MAP_WIDTH = 16
+const MAP_HEIGHT = 16
+const MAP_SIZE = MAP_WIDTH*MAP_HEIGHT
+const MAP_SCALE = 1
 
-const minProductivity = 1
-const minRange = 3
+const MIN_PRODUCTIVITY = 1
+const MIN_RANGE = 3
+
+const TILE_FOOD_COST_MULTIPLIER = 5
 
 var xPos = 0
 var yPos = 0
@@ -13,7 +15,7 @@ var foodCount = 0
 var productionCount = 0
 var goldCount = 0
 
-var foodCost = 10
+var tileCount = 0
 var goldCost = 0
 
 var foodYield = 0
@@ -48,8 +50,8 @@ function onStart(){
 
     $("#move-home").on('click', function(){
         if (worldMap["home"]) {
-            xPos = worldMap["home"][0] - Math.floor(mapWidth/2)
-            yPos = worldMap["home"][1] - Math.floor(mapHeight/2)
+            xPos = worldMap["home"][0] - Math.floor(MAP_WIDTH/2)
+            yPos = worldMap["home"][1] - Math.floor(MAP_HEIGHT/2)
             renderMap() 
             renderPanels()
         }
@@ -83,8 +85,8 @@ function renderMap() {
     var map = $("#map")
     map.empty()
     for (var i = 0; i < 256; i++) {
-        var x = i%mapWidth + xPos
-        var y = Math.floor(i/mapWidth) + yPos
+        var x = i%MAP_WIDTH + xPos
+        var y = Math.floor(i/MAP_WIDTH) + yPos
         map.append('<div class="grid-tile '+getTerrainFromPos(x, y)+'" id="'+i+'"></div>')
         $("#"+i).on('click', function(c){ setCursor(c) })
     }
@@ -217,11 +219,11 @@ function getRelPosFromId(tileId) {
     id = Number(tileId)
     if (id == NaN) {
         throw "Error: Tile ID "+id+"is not a number"
-    } else if (id >= mapSize || id < 0) {
+    } else if (id >= MAP_SIZE || id < 0) {
         throw "Error: ID not within range"
     }
-    x = id%mapWidth
-    y = Math.floor(id/mapHeight)
+    x = id%MAP_WIDTH
+    y = Math.floor(id/MAP_HEIGHT)
     return [x, y]
 }
 
@@ -247,9 +249,9 @@ function getRelFromWorldPos(xWorld, yWorld) {
 
     if (
         x >= 0 &&
-        x < mapWidth &&
+        x < MAP_WIDTH &&
         y >= 0 &&
-        y < mapHeight
+        y < MAP_HEIGHT
     ) {
         return [x, y]
     }
@@ -262,7 +264,7 @@ function getTileIdFromRel(xRel, yRel) {
     if (isNaN(x) || isNaN(y)) {
         throw "Error: Position x or y is not a number"
     }
-    return x + y*mapWidth
+    return x + y*MAP_WIDTH
 }
 
 function getTileIdFromWorld(x, y) {
@@ -300,13 +302,13 @@ function getHeight(tileId) {
     if (isNaN(id)) {
         throw "Error: Tile id is not a number"
     }
-    var x = id%mapWidth + xPos
-    var y = Math.floor(id/mapWidth) + yPos
-    var v = perlin.get(x/mapWidth, y/mapHeight)
+    var x = id%MAP_WIDTH + xPos
+    var y = Math.floor(id/MAP_WIDTH) + yPos
+    var v = perlin.get(x/MAP_WIDTH, y/MAP_HEIGHT)
 }
 
 function getTerrainFromPos(x, y) {
-    var n = perlin.get(x/mapWidth, y/mapHeight)
+    var n = perlin.get(x/MAP_WIDTH, y/MAP_HEIGHT)
     if (n < -0.1) {
         return "ocean-tile"
     } else if (n <= 0) {
@@ -341,9 +343,9 @@ function isOnScreen(x, y) {
 
     if (
         x >= xPos && 
-        x < xPos + mapWidth && 
+        x < xPos + MAP_WIDTH && 
         y >= yPos && 
-        y < yPos + mapHeight
+        y < yPos + MAP_HEIGHT
     ) {
         return true
     }
@@ -359,8 +361,8 @@ function settle() {
     goldCount -= settlementCost()
     
     settlements["position"].push(worldMap["cursor"])
-    settlements["productivity"].push(minProductivity)
-    settlements["range"].push(minRange)
+    settlements["productivity"].push(MIN_PRODUCTIVITY)
+    settlements["range"].push(MIN_RANGE)
     worldMap["home"] = worldMap["cursor"]
     
 }
@@ -419,8 +421,8 @@ function claimTile() {
     })
 
     goldCount -= goldCost
-    foodCount -= foodCost
-    foodCost *= 2
+    foodCount -= tileFoodCost()
+    tileCount += 1
 
     foodYield += yields[0]
     productionCount += yields[1]
@@ -440,7 +442,7 @@ function modifyProductivity(v) {
     var settlementId = getSettlementFromTileId(tileId)
 
     // Pass if would decrease productivity below minimum value
-    if (settlements["productivity"][settlementId] + v < minProductivity) {
+    if (settlements["productivity"][settlementId] + v < MIN_PRODUCTIVITY) {
         console.log("Failed modify: Would go below minimum productivity")
         return
     }
@@ -461,7 +463,7 @@ function modifyRange(v) {
     var settlementId = getSettlementFromTileId(tileId)
 
     // Pass if would decrease range below minimum value
-    if (settlements["range"][settlementId] + v < minRange) {
+    if (settlements["range"][settlementId] + v < MIN_RANGE) {
         console.log("Failed modify: Would go below minimum range")
         return
     }
@@ -469,6 +471,10 @@ function modifyRange(v) {
     productionCount -= v
     settlements["range"][settlementId] += v
 
+}
+
+function tileFoodCost() {
+    return Math.pow(2, tileCount)*TILE_FOOD_COST_MULTIPLIER
 }
 
 function settlementCost() {
