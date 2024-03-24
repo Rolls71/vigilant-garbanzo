@@ -15,6 +15,10 @@ var goldCost = 0
 var foodYield = 0
 var productionYield = 0
 
+var settlementProduction = 1
+var settlementRange = 5
+//TODO: separate claim and build range
+
 var worldMap = {
     "claims": [],
 }
@@ -41,16 +45,10 @@ function onStart(){
             renderPanels()
         }
     })
-    $("#set-home").on('click', function(){
-        worldMap["home"] = worldMap["cursor"] 
-        worldMap["claims"] = []
-        foodYield = 1
-        productionCount = 0
-        productionYield = 0
-        renderMap()
-        renderPanels()
-    })
+    $("#settle").on('click', function(){ settle(); renderMap(); renderPanels() })
     $("#claim-tile").on('click', function(){ claimTile(); renderPanels() })
+    $("#increase-production").on('click', function(){ modifyProduction(1); renderPanels() })
+    $("#decrease-production").on('click', function(){ modifyProduction(-1); renderPanels() })
 
     $("#move-left").on('click', function(){ xPos = xPos-1; renderMap(); renderPanels() })
     $("#move-up").on('click', function(){ yPos = yPos-1; renderMap(); renderPanels() })
@@ -110,38 +108,49 @@ function renderMap() {
 }
 
 function renderPanels() {
-    $("#food-panel").text(foodCount+" Food (+"+foodYield+")")
+    $("#food-panel").text(foodCount+" Food (+"+foodProduction()+")")
     $("#production-panel").text(productionCount+"/"+productionYield+" Production")
     $("#gold-panel").text(goldCount+" Gold")
 
+    $("#selected-settlement").hide()
+    $("#settlement-stats").hide()
+    $("#increase-production").hide()
+    $("#decrease-production").hide()
     var tiles = $(".cursor-tile")
     if (tiles.length != 1) {
-        $("#set-home")[0].hidden = true
-        $("#claim-tile")[0].hidden = true
+        $("#settle").hide()
+        $("#claim-tile").hide()
         return
     }
     var tile = tiles[0]
 
 
-    $("#set-home")[0].hidden = false
-    $("#claim-tile")[0].hidden = false
+    $("#settle").show()
+    $("#claim-tile").show()
 
     if (tile.classList.contains("home-tile")) {
-        $("#set-home")[0].hidden = true
-        $("#claim-tile")[0].hidden = true
+        $("#settle").hide()
+        $("#claim-tile").hide()
+        $("#selected-settlement").show()
+        $("#settlement-stats").show()
+        $("#increase-production").show()
+        $("#decrease-production").show()
+
+        $("#settlement-stats").text("Production: "+settlementProduction
+            +"\nRange: "+settlementRange)
     }
     if (tile.classList.contains("ocean-tile")) {
-        $("#set-home")[0].hidden = true
+        $("#settle").hide()
     }
     if (tile.classList.contains("claimed-tile")) {
-        $("#claim-tile")[0].hidden = true
+        $("#claim-tile").hide()
     }
 
 
 }
 
 function tick() {
-    foodCount += foodYield
+    foodCount += foodYield * settlementProduction
 
     renderPanels()
 }
@@ -161,6 +170,7 @@ function setCursor(c){
 
     goldCost = yields[3]
     $("#claim-tile").text("Claim "+goldCost+" Gold, "+foodCost+" Food")
+    $("#settle").text("Settle "+goldCost+" Gold")
     $("#tile-yields").text("Yields "+yields[0]+" food, "
         +yields[1]+" production, and "+yields[2]+" gold.")
 
@@ -281,6 +291,21 @@ function isInRange(x, y) {
     return false
 }
 
+function settle() {
+    // Pass if lacking necessary resources
+    if (goldCount < goldCost) {
+        console.log("Failed Claim: Lacking necessary resources")
+        return
+    }
+
+    worldMap["home"] = worldMap["cursor"] 
+    worldMap["claims"] = []
+    foodYield = 1
+    productionCount = 0
+    productionYield = 0
+    goldCount -= goldCost
+}
+
 function claimTile() {
     // Pass if no home set
     if (!worldMap["home"]) {
@@ -333,4 +358,21 @@ function claimTile() {
     productionYield += yields[1]
     goldCount += yields[2]
     renderPanels()
+}
+
+function modifyProduction(v) {
+    // TODO: detect which specific settlement is selected
+    if (productionCount - v < 0 || productionCount - v > productionYield) {
+        console.log("Failed modify: Too much production or none left")
+        return
+    }
+    productionCount -= v
+    settlementProduction += v
+    settlementRange += v
+
+}
+
+function foodProduction() {
+    // TODO: needs to sum all food yields
+    return foodYield * settlementProduction
 }
