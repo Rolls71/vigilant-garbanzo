@@ -8,6 +8,8 @@ const MIN_RANGE = 3
 
 const TILE_FOOD_COST_MULTIPLIER = 5
 
+const SETTLEMENT_TILE_COST_DIVISOR = 4
+
 var xPos = 0
 var yPos = 0
 
@@ -206,7 +208,7 @@ function setCursor(c){
     })
 
     goldCost = yields[3]
-    $("#claim-tile").text("Claim "+goldCost+" Gold, "+foodCost+" Food")
+    $("#claim-tile").text("Claim "+goldCost+" Gold, "+tileFoodCost()+" Food")
     $("#settle").text("Settle "+settlementCost()+" Gold")
     $("#tile-yields").text("Yields "+yields[0]+" food, "
         +yields[1]+" production, and "+yields[2]+" gold.")
@@ -393,7 +395,7 @@ function claimTile() {
     }
 
     // Pass if lacking necessary resources
-    if (foodCount < foodCost || goldCount < goldCost) {
+    if (foodCount < tileFoodCost() || goldCount < goldCost) {
         console.log("Failed Claim: Lacking necessary resources")
         return
     }
@@ -474,7 +476,8 @@ function modifyRange(v) {
 }
 
 function tileFoodCost() {
-    return Math.pow(2, tileCount)*TILE_FOOD_COST_MULTIPLIER
+    return (Math.pow(2, tileCount)*TILE_FOOD_COST_MULTIPLIER*SETTLEMENT_TILE_COST_DIVISOR)/
+        (Math.pow(SETTLEMENT_TILE_COST_DIVISOR, settlements["position"].length))
 }
 
 function settlementCost() {
