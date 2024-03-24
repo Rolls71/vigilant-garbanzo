@@ -3,8 +3,8 @@ const mapHeight = 16
 const mapSize = mapWidth*mapHeight
 const mapScale = 1
 
-const startProductivity = 1
-const startRange = 3
+const minProductivity = 1
+const minRange = 3
 
 var xPos = 0
 var yPos = 0
@@ -54,15 +54,27 @@ function onStart(){
             renderPanels()
         }
     })
-    $("#settle").on('click', function(){ settle(); renderMap(); renderPanels() })
-    $("#claim-tile").on('click', function(){ claimTile(); renderMap(); renderPanels() })
-    $("#increase-production").on('click', function(){ modifyProduction(1); renderPanels() })
-    $("#decrease-production").on('click', function(){ modifyProduction(-1); renderPanels() })
+    $("#settle").on('click', function(){ 
+        settle(); renderMap(); renderPanels() })
+    $("#claim-tile").on('click', function(){ 
+        claimTile(); renderMap(); renderPanels() })
+    $("#increase-productivity").on('click', function(){ 
+        modifyProductivity(1); renderPanels() })
+    $("#decrease-productivity").on('click', function(){ 
+        modifyProductivity(-1); renderPanels() })
+    $("#increase-range").on('click', function(){ 
+        modifyRange(1); renderPanels() })
+    $("#decrease-range").on('click', function(){ 
+        modifyRange(-1); renderPanels() })
 
-    $("#move-left").on('click', function(){ xPos = xPos-1; renderMap(); renderPanels() })
-    $("#move-up").on('click', function(){ yPos = yPos-1; renderMap(); renderPanels() })
-    $("#move-right").on('click', function(){ xPos = xPos+1; renderMap(); renderPanels() })
-    $("#move-down").on('click', function(){ yPos = yPos+1; renderMap(); renderPanels() })
+    $("#move-left").on('click', function(){ 
+        xPos = xPos-1; renderMap(); renderPanels() })
+    $("#move-up").on('click', function(){ 
+        yPos = yPos-1; renderMap(); renderPanels() })
+    $("#move-right").on('click', function(){ 
+        xPos = xPos+1; renderMap(); renderPanels() })
+    $("#move-down").on('click', function(){ 
+        yPos = yPos+1; renderMap(); renderPanels() })
 
     window.setInterval(function(){ tick() }, 1000)
 }
@@ -102,8 +114,11 @@ function renderPanels() {
 
     $("#selected-settlement").hide()
     $("#settlement-stats").hide()
-    $("#increase-production").hide()
-    $("#decrease-production").hide()
+    $("#increase-productivity").hide()
+    $("#decrease-productivity").hide()
+    $("#increase-range").hide()
+    $("#decrease-range").hide()
+
     var tiles = $(".cursor-tile")
     if (tiles.length != 1) {
         $("#settle").hide()
@@ -121,8 +136,10 @@ function renderPanels() {
         $("#claim-tile").hide()
         $("#selected-settlement").show()
         $("#settlement-stats").show()
-        $("#increase-production").show()
-        $("#decrease-production").show()
+        $("#increase-productivity").show()
+        $("#decrease-productivity").show()
+        $("#increase-range").show()
+        $("#decrease-range").show()
 
         var id = getSettlementFromTileId(tile.id)
         $("#settlement-stats").html("Productivity: "+settlements["productivity"][id]
@@ -342,8 +359,8 @@ function settle() {
     goldCount -= settlementCost()
     
     settlements["position"].push(worldMap["cursor"])
-    settlements["productivity"].push(startProductivity)
-    settlements["range"].push(startRange)
+    settlements["productivity"].push(minProductivity)
+    settlements["range"].push(minRange)
     worldMap["home"] = worldMap["cursor"]
     
 }
@@ -412,8 +429,8 @@ function claimTile() {
     renderPanels()
 }
 
-function modifyProduction(v) {
-    // TODO: detect which specific settlement is selected
+function modifyProductivity(v) {
+    // Pass if would use or produce more production than exists
     if (productionCount - v < 0 || productionCount - v > productionYield) {
         console.log("Failed modify: Too much production or none left")
         return
@@ -421,8 +438,35 @@ function modifyProduction(v) {
 
     var tileId = getTileIdFromWorld(...worldMap["cursor"])
     var settlementId = getSettlementFromTileId(tileId)
+
+    // Pass if would decrease productivity below minimum value
+    if (settlements["productivity"][settlementId] + v < minProductivity) {
+        console.log("Failed modify: Would go below minimum productivity")
+        return
+    }
+
     productionCount -= v
     settlements["productivity"][settlementId] += v
+
+}
+
+function modifyRange(v) {
+    // Pass if would use or produce more production than exists
+    if (productionCount - v < 0 || productionCount - v > productionYield) {
+        console.log("Failed modify: Too much production or none left")
+        return
+    }
+
+    var tileId = getTileIdFromWorld(...worldMap["cursor"])
+    var settlementId = getSettlementFromTileId(tileId)
+
+    // Pass if would decrease range below minimum value
+    if (settlements["range"][settlementId] + v < minRange) {
+        console.log("Failed modify: Would go below minimum range")
+        return
+    }
+
+    productionCount -= v
     settlements["range"][settlementId] += v
 
 }
