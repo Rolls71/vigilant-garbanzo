@@ -96,15 +96,15 @@ function renderMap() {
             .classList.add("cursor-tile")
     }
     for (var i = 0; i < settlements["position"].length; i++) {
-        $("#"+getTileIdFromWorld(...settlements["position"][i]))[0]
-            .classList.add("home-tile")
+        if (isOnScreen(...settlements["position"][i])) {
+            $("#"+getTileIdFromWorld(...settlements["position"][i]))[0]
+                .classList.add("home-tile")
+        }
     }
     for (var i = 0; i < worldMap["claims"].length; i++) {
-        try {
+        if (isOnScreen(...worldMap["claims"][i])) {
             $("#"+getTileIdFromWorld(...worldMap["claims"][i]))[0]
                 .classList.add("claimed-tile")
-        } catch {
-            continue
         }
     }
 }
