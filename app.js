@@ -23,8 +23,6 @@ var goldCost = 0
 var foodYield = 0
 var productionYield = 0
 
-//TODO: separate claim and build range
-
 var settlements = {
     "position": [],
     "productivity": [],
@@ -185,13 +183,128 @@ function tick() {
     renderPanels()
 }
 
-function isInSettlementRange(i, x, y) {
-    return isInRange(
-        ...settlements["position"][i], x, y, settlements["range"][i]
-    )
+
+
+// Actions
+function settle() {
+    // Pass if lacking necessary resources
+    if (goldCount < getSettlementCost()) {
+        console.log("Failed Claim: Lacking necessary resources")
+        return
+    }
+    goldCount -= getSettlementCost()
+    
+    settlements["position"].push(worldMap["cursor"])
+    settlements["productivity"].push(MIN_PRODUCTIVITY)
+    settlements["range"].push(MIN_RANGE)
+    worldMap["home"] = worldMap["cursor"]
+    
 }
-function isInRange(x1, y1, x2, y2, range) {
-    return (Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) ) <= range)
+
+function claimTile() {
+    // Pass if no home set
+    if (!worldMap["home"]) {
+        console.log("Failed Claim: No home set")
+        return
+    }
+
+    // Pass if already claimed
+    if (isClaimed(...worldMap["cursor"])) {
+        console.log("Failed Claim: Already claimed")
+        return
+    }
+
+    // Pass if not adjacent to a claim or home
+    var neighbours = getAdjacentPos(...worldMap["cursor"])
+    for (var i = 0; i < neighbours.length; i++) {
+        if (isClaimed(...neighbours[i])) {
+            break
+        }
+        if (i+1 == neighbours.length) {
+            console.log("Failed Claim: No adjacent claims")
+            return
+        }
+    }
+
+    // Pass if lacking necessary resources
+    if (foodCount < getTileFoodCost() || goldCount < goldCost) {
+        console.log("Failed Claim: Lacking necessary resources")
+        return
+    }
+
+    // Pass if out of range of settlements
+    for (var i = 0; i < settlements["position"].length; i++) {
+        if (isInSettlementRange(i, ...worldMap["cursor"])) {
+            break
+        }
+        if (i+1 == settlements["position"].length) {
+            console.log("Failed Claim: No settlement in range")
+            return
+        }
+    }
+
+    worldMap["claims"].push(worldMap["cursor"])
+
+    var yields = [0, 0, 0]
+    $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
+        if (tileYields[e]) {
+            yields = yields.map(function(num, i) {
+                return num + tileYields[e][i]
+            })
+        }
+    })
+
+    goldCount -= goldCost
+    foodCount -= getTileFoodCost()
+    tileCount += 1
+
+    foodYield += yields[0]
+    productionCount += yields[1]
+    productionYield += yields[1]
+    goldCount += yields[2]
+    renderPanels()
+}
+
+function modifyProductivity(v) {
+    // Pass if would use or produce more production than exists
+    if (productionCount - v < 0 || productionCount - v > productionYield) {
+        console.log("Failed modify: Too much production or none left")
+        return
+    }
+
+    var tileId = getTileIdFromWorld(...worldMap["cursor"])
+    var settlementId = getSettlementFromTileId(tileId)
+
+    // Pass if would decrease productivity below minimum value
+    if (settlements["productivity"][settlementId] + v < MIN_PRODUCTIVITY) {
+        console.log("Failed modify: Would go below minimum productivity")
+        return
+    }
+
+    productionCount -= v
+    settlements["productivity"][settlementId] += v
+
+}
+
+function modifyRange(v) {
+    // Pass if would use or produce more production than exists
+    if (productionCount - v < 0 || productionCount - v > productionYield) {
+        console.log("Failed modify: Too much production or none left")
+        return
+    }
+
+    var tileId = getTileIdFromWorld(...worldMap["cursor"])
+    var settlementId = getSettlementFromTileId(tileId)
+
+    // Pass if would decrease range below minimum value
+    if (settlements["range"][settlementId] + v < MIN_RANGE) {
+        console.log("Failed modify: Would go below minimum range")
+        return
+    }
+
+    productionCount -= v
+    settlements["range"][settlementId] += v
+
 }
 
 function setCursor(c){
@@ -208,8 +321,8 @@ function setCursor(c){
     })
 
     goldCost = yields[3]
-    $("#claim-tile").text("Claim "+goldCost+" Gold, "+tileFoodCost()+" Food")
-    $("#settle").text("Settle "+settlementCost()+" Gold")
+    $("#claim-tile").text("Claim "+goldCost+" Gold, "+getTileFoodCost()+" Food")
+    $("#settle").text("Settle "+getSettlementCost()+" Gold")
     $("#tile-yields").text("Yields "+yields[0]+" food, "
         +yields[1]+" production, and "+yields[2]+" gold.")
 
@@ -217,6 +330,11 @@ function setCursor(c){
     renderPanels()
 }
 
+
+
+/******************************* Pure Functions *******************************/
+
+// Fetch functions
 function getRelPosFromId(tileId) {
     id = Number(tileId)
     if (id == NaN) {
@@ -287,28 +405,6 @@ function getAdjacentPos(xP, yP) {
     ]
 }
 
-function isClaimed(x, y) {
-    if (settlements["position"].toString().indexOf([x, y].toString()) >= 0) {
-        return true
-    }
-
-    if (worldMap["claims"].length > 0 &&
-        worldMap["claims"].toString().indexOf([x, y].toString()) >= 0) {
-        return true
-    }
-    return false
-}
-
-function getHeight(tileId) {    
-    id = Number(tileId)
-    if (isNaN(id)) {
-        throw "Error: Tile id is not a number"
-    }
-    var x = id%MAP_WIDTH + xPos
-    var y = Math.floor(id/MAP_WIDTH) + yPos
-    var v = perlin.get(x/MAP_WIDTH, y/MAP_HEIGHT)
-}
-
 function getTerrainFromPos(x, y) {
     var n = perlin.get(x/MAP_WIDTH, y/MAP_HEIGHT)
     if (n < -0.1) {
@@ -336,6 +432,21 @@ function getSettlementFromTileId(id) {
     return i
 }
 
+
+
+// Formulas
+function getTileFoodCost() {
+    return (Math.pow(2, tileCount)*TILE_FOOD_COST_MULTIPLIER*SETTLEMENT_TILE_COST_DIVISOR)/
+        (Math.pow(SETTLEMENT_TILE_COST_DIVISOR, settlements["position"].length))
+}
+
+function getSettlementCost() {
+    return goldCost + Math.pow(settlements["position"].length, 2)
+}
+
+
+
+// Bool Tests
 function isOnScreen(x, y) {
     var x = Number(x)
     var y = Number(y)
@@ -354,132 +465,25 @@ function isOnScreen(x, y) {
     return false
 }
 
-function settle() {
-    // Pass if lacking necessary resources
-    if (goldCount < settlementCost()) {
-        console.log("Failed Claim: Lacking necessary resources")
-        return
+function isClaimed(x, y) {
+    if (settlements["position"].toString().indexOf([x, y].toString()) >= 0) {
+        return true
     }
-    goldCount -= settlementCost()
-    
-    settlements["position"].push(worldMap["cursor"])
-    settlements["productivity"].push(MIN_PRODUCTIVITY)
-    settlements["range"].push(MIN_RANGE)
-    worldMap["home"] = worldMap["cursor"]
-    
+
+    if (worldMap["claims"].length > 0 &&
+        worldMap["claims"].toString().indexOf([x, y].toString()) >= 0) {
+        return true
+    }
+    return false
 }
 
-function claimTile() {
-    // Pass if no home set
-    if (!worldMap["home"]) {
-        console.log("Failed Claim: No home set")
-        return
-    }
-
-    // Pass if already claimed
-    if (isClaimed(...worldMap["cursor"])) {
-        console.log("Failed Claim: Already claimed")
-        return
-    }
-
-    // Pass if not adjacent to a claim or home
-    var neighbours = getAdjacentPos(...worldMap["cursor"])
-    for (var i = 0; i < neighbours.length; i++) {
-        if (isClaimed(...neighbours[i])) {
-            break
-        }
-        if (i+1 == neighbours.length) {
-            console.log("Failed Claim: No adjacent claims")
-            return
-        }
-    }
-
-    // Pass if lacking necessary resources
-    if (foodCount < tileFoodCost() || goldCount < goldCost) {
-        console.log("Failed Claim: Lacking necessary resources")
-        return
-    }
-
-    // Pass if out of range of settlements
-    for (var i = 0; i < settlements["position"].length; i++) {
-        if (isInSettlementRange(i, ...worldMap["cursor"])) {
-            break
-        }
-        if (i+1 == settlements["position"].length) {
-            console.log("Failed Claim: No settlement in range")
-            return
-        }
-    }
-
-    worldMap["claims"].push(worldMap["cursor"])
-
-    var yields = [0, 0, 0]
-    $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
-        if (tileYields[e]) {
-            yields = yields.map(function(num, i) {
-                return num + tileYields[e][i]
-            })
-        }
-    })
-
-    goldCount -= goldCost
-    foodCount -= tileFoodCost()
-    tileCount += 1
-
-    foodYield += yields[0]
-    productionCount += yields[1]
-    productionYield += yields[1]
-    goldCount += yields[2]
-    renderPanels()
+function isInSettlementRange(i, x, y) {
+    return isInRange(
+        ...settlements["position"][i], x, y, settlements["range"][i]
+    )
 }
 
-function modifyProductivity(v) {
-    // Pass if would use or produce more production than exists
-    if (productionCount - v < 0 || productionCount - v > productionYield) {
-        console.log("Failed modify: Too much production or none left")
-        return
-    }
-
-    var tileId = getTileIdFromWorld(...worldMap["cursor"])
-    var settlementId = getSettlementFromTileId(tileId)
-
-    // Pass if would decrease productivity below minimum value
-    if (settlements["productivity"][settlementId] + v < MIN_PRODUCTIVITY) {
-        console.log("Failed modify: Would go below minimum productivity")
-        return
-    }
-
-    productionCount -= v
-    settlements["productivity"][settlementId] += v
-
+function isInRange(x1, y1, x2, y2, range) {
+    return (Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) ) <= range)
 }
 
-function modifyRange(v) {
-    // Pass if would use or produce more production than exists
-    if (productionCount - v < 0 || productionCount - v > productionYield) {
-        console.log("Failed modify: Too much production or none left")
-        return
-    }
-
-    var tileId = getTileIdFromWorld(...worldMap["cursor"])
-    var settlementId = getSettlementFromTileId(tileId)
-
-    // Pass if would decrease range below minimum value
-    if (settlements["range"][settlementId] + v < MIN_RANGE) {
-        console.log("Failed modify: Would go below minimum range")
-        return
-    }
-
-    productionCount -= v
-    settlements["range"][settlementId] += v
-
-}
-
-function tileFoodCost() {
-    return (Math.pow(2, tileCount)*TILE_FOOD_COST_MULTIPLIER*SETTLEMENT_TILE_COST_DIVISOR)/
-        (Math.pow(SETTLEMENT_TILE_COST_DIVISOR, settlements["position"].length))
-}
-
-function settlementCost() {
-    return goldCost + Math.pow(settlements["position"].length, 2)
-}
