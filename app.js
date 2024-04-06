@@ -29,9 +29,8 @@ var settlements = {
     "range": [],
 }
 
-var worldMap = {
-    "claims": [],
-}
+var claims = []
+var worldMap = {}
 
 // Food, Production, Gold, Gold Cost
 var tileYields = {
@@ -101,9 +100,9 @@ function renderMap() {
                 .classList.add("home-tile")
         }
     }
-    for (var i = 0; i < worldMap["claims"].length; i++) {
-        if (isOnScreen(...worldMap["claims"][i])) {
-            $("#"+getTileIdFromWorld(...worldMap["claims"][i]))[0]
+    for (var i = 0; i < claims.length; i++) {
+        if (isOnScreen(...claims[i])) {
+            $("#"+getTileIdFromWorld(...claims[i]))[0]
                 .classList.add("claimed-tile")
         }
     }
@@ -160,11 +159,11 @@ function renderPanels() {
 function tick() {
     foodYield = settlements["position"].length
     productionYield = 0
-    for (var i = 0; i < worldMap["claims"].length; i++) {
+    for (var i = 0; i < claims.length; i++) {
         var highestProductivity = 0
         for (var j = 0; j < settlements["position"].length; j++) {
             if (isInRange(
-                ...worldMap["claims"][i], 
+                ...claims[i], 
                 ...settlements["position"][j], 
                 settlements["range"][j]
                 ) && settlements["productivity"][j] > highestProductivity) {
@@ -174,7 +173,7 @@ function tick() {
         if (highestProductivity == 0) {
             throw "Error: claim with 0 productivity."
         } else {
-            var terrain = getTerrainFromPos(...worldMap["claims"][i])
+            var terrain = getTerrainFromPos(...claims[i])
             foodYield += tileYields[terrain][0]*highestProductivity
             productionYield += tileYields[terrain][1]
         }
@@ -243,7 +242,7 @@ function claimTile() {
         }
     }
 
-    worldMap["claims"].push(worldMap["cursor"])
+    claims.push(worldMap["cursor"])
 
     var yields = [0, 0, 0]
     $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
@@ -262,7 +261,6 @@ function claimTile() {
     productionCount += yields[1]
     productionYield += yields[1]
     goldCount += yields[2]
-    renderPanels()
 }
 
 function modifyProductivity(v) {
@@ -470,8 +468,8 @@ function isClaimed(x, y) {
         return true
     }
 
-    if (worldMap["claims"].length > 0 &&
-        worldMap["claims"].toString().indexOf([x, y].toString()) >= 0) {
+    if (claims.length > 0 &&
+        claims.toString().indexOf([x, y].toString()) >= 0) {
         return true
     }
     return false
