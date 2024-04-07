@@ -18,16 +18,16 @@
     background-color: rgb(30, 30, 30);
 }
 
-.cursor-tile {
-    border: 2px solid gold;
-    padding: 0px;
-    background-position: 0px 0px;
+.claimed-tile {
+    background-image: url("img/claim.png")
 }
 
 .home-tile {
     background-image: url("img/home.png");
 }
 
-.claimed-tile {
-    background-image: url("img/claim.png")
+.cursor-tile {
+    border: 2px solid gold;
+    padding: 0px;
+    background-position: 0px 0px;
 }

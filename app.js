@@ -197,6 +197,23 @@ function settle() {
     settlements["productivity"].push(MIN_PRODUCTIVITY)
     settlements["range"].push(MIN_RANGE)
     worldMap["home"] = worldMap["cursor"]
+
+    claims.push(worldMap["cursor"])
+
+    // claim tile
+    var yields = [0, 0, 0]
+    $("#"+getTileIdFromWorld(...worldMap['cursor']))[0].classList.forEach((e) => {
+        if (tileYields[e]) {
+            yields = yields.map(function(num, i) {
+                return num + tileYields[e][i]
+            })
+        }
+    })
+    tileCount += 1
+    foodYield += yields[0]
+    productionCount += yields[1]
+    productionYield += yields[1]
+    goldCount += yields[2]
     
 }
 
