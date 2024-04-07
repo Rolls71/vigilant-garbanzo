@@ -464,12 +464,12 @@ function isOnScreen(x, y) {
 }
 
 function isClaimed(x, y) {
-    if (settlements["position"].toString().indexOf([x, y].toString()) >= 0) {
+    if (JSON.stringify(settlements["position"]).indexOf(JSON.stringify([x, y])) >= 0) {
         return true
     }
 
     if (claims.length > 0 &&
-        claims.toString().indexOf([x, y].toString()) >= 0) {
+        JSON.stringify(claims).indexOf(JSON.stringify([x, y])) >= 0) {
         return true
     }
     return false
@@ -484,4 +484,3 @@ function isInSettlementRange(i, x, y) {
 function isInRange(x1, y1, x2, y2, range) {
     return (Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) ) <= range)
 }
-
