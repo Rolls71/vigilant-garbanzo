@@ -422,11 +422,11 @@ function getAdjacentPos(xP, yP) {
 
 function getTerrainFromPos(x, y) {
     var n = perlin.get(x/MAP_WIDTH, y/MAP_HEIGHT)
-    if (n < -0.1) {
+    if (n < 0.1) {
         return "ocean-tile"
-    } else if (n <= 0) {
+    } else if (n <= 0.15) {
         return "sand-tile"
-    } else if (n <= 0.2) {
+    } else if (n <= 0.3) {
         return "grass-tile"
     } else if (n <= 0.4) {
         return "forest-tile"
