@@ -165,11 +165,15 @@ function renderPanels() {
     if (tile.classList.contains("claimed-tile")) {
         $("#claim-tile").hide()
         if (tile.classList.contains("sand-tile") && 
-            !tile.classList.contains("dockyard-tile")) {
-            $("#build-dockyard").show()
-            $("#build-dockyard").html("Build Dockyard "
-                +getDockyardGoldCost()+" Gold "+getDockyardProductionCost()+"/"
-                +getDockyardProductionCost()+" Production")
+                settlements["position"].length > 1) {
+            if (!tile.classList.contains("dockyard-tile")) {
+                $("#build-dockyard").show()
+                $("#build-dockyard").html("Build Dockyard "
+                    +getDockyardGoldCost()+" Gold "
+                    +getDockyardProductionCost()+" Production")
+            } else {
+                $("#settle").hide()
+            }
         }
     }
 
@@ -245,7 +249,6 @@ function settle() {
     tileCount += 1
     foodYield += yields[0]
     productionCount += yields[1]
-    productionYield += yields[1]
     goldCount += yields[2]
     
 }
@@ -267,10 +270,20 @@ function claimTile() {
     var neighbours = getAdjacentPos(...worldMap["cursor"])
     for (var i = 0; i < neighbours.length; i++) {
         if (isClaimed(...neighbours[i])) {
-            break
+            // Pass if tile is deep ocean without dockyard
+            if (getTerrainFromPos(...worldMap["cursor"]) != "ocean-tile") {
+                break
+            }
+            if (getTerrainFromPos(...neighbours[i]) != "ocean-tile") {
+                break
+            }
         }
         if (i+1 == neighbours.length) {
-            console.log("Failed Claim: No adjacent claims")
+            if (getTerrainFromPos(...worldMap["cursor"]) == "ocean-tile") {
+                console.log("Failed Ocean Claim: No connected dockyard or adjacent land claims")
+            } else {
+                console.log("Failed Claim: No adjacent claims")
+            }
             return
         }
     }
@@ -309,26 +322,10 @@ function claimTile() {
 
     foodYield += yields[0]
     productionCount += yields[1]
-    productionYield += yields[1]
     goldCount += yields[2]
 }
 
 function buildDockyard() {
-    // Pass if lacking necessary resources
-    if (goldCount < getDockyardGoldCost() || 
-        productionCount < getDockyardProductionCost() ||
-        productionYield < getDockyardProductionCost()) {
-        console.log("Failed Dockyard Build: Lacking necessary resources")
-        return
-    }
-
-    // Pass if on-top of another building
-    if (JSON.stringify(buildings)
-            .indexOf(JSON.stringify(worldMap["cursor"])) >= 0) {
-        console.log("Failed Dockyard Build: Can't build on top of buildings")
-        return
-    }
-
     // Pass if no adjacent ocean
     var adj = getAdjacentPos(...worldMap["cursor"])
     for (var i = 0; i < adj.length; i++) {
@@ -341,9 +338,22 @@ function buildDockyard() {
         }
     }
 
+    // Pass if lacking necessary resources
+    if (goldCount < getDockyardGoldCost() || 
+        productionCount < getDockyardProductionCost()) {
+        console.log("Failed Dockyard Build: Lacking necessary resources")
+        return
+    }
+
+    // Pass if on-top of another building
+    if (JSON.stringify(buildings)
+            .indexOf(JSON.stringify(worldMap["cursor"])) >= 0) {
+        console.log("Failed Dockyard Build: Can't build on top of buildings")
+        return
+    }
+
     goldCount -= getDockyardGoldCost()
     productionCount -= getDockyardProductionCost()
-    productionYield -= getDockyardProductionCost()
 
     buildings["dockyards"].push(worldMap["cursor"])
     dockyardCount += 1
@@ -533,7 +543,7 @@ function getDockyardGoldCost() {
 }
 
 function getDockyardProductionCost() {
-    return dockyardCount
+    return dockyardCount + 1
 }
 
 
