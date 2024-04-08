@@ -17,6 +17,7 @@ var foodCount = 0
 var productionCount = 0
 var goldCount = 0
 
+var dockyardCount = 0
 var tileCount = 0
 var goldCost = 0
 
@@ -28,7 +29,9 @@ var settlements = {
     "productivity": [],
     "range": [],
 }
-
+var buildings = {
+    "dockyards": []
+}
 var claims = []
 var worldMap = {}
 
@@ -59,6 +62,8 @@ function onStart(){
         settle(); renderMap(); renderPanels() })
     $("#claim-tile").on('click', function(){ 
         claimTile(); renderMap(); renderPanels() })
+    $("#build-dockyard").on('click', function(){ 
+        buildDockyard(); renderMap(); renderPanels() })
     $("#increase-productivity").on('click', function(){ 
         modifyProductivity(1); renderPanels() })
     $("#decrease-productivity").on('click', function(){ 
@@ -106,6 +111,12 @@ function renderMap() {
                 .classList.add("claimed-tile")
         }
     }
+    for (var i = 0; i < buildings["dockyards"].length; i++) {
+        if (isOnScreen(...buildings["dockyards"][i])) {
+            $("#"+getTileIdFromWorld(...buildings["dockyards"][i]))[0]
+                .classList.add("dockyard-tile")
+        }
+    }
 }
 
 function renderPanels() {
@@ -115,6 +126,7 @@ function renderPanels() {
 
     $("#selected-settlement").hide()
     $("#settlement-stats").hide()
+    $("#build-dockyard").hide()
     $("#increase-productivity").hide()
     $("#decrease-productivity").hide()
     $("#increase-range").hide()
@@ -145,12 +157,20 @@ function renderPanels() {
         var id = getSettlementFromTileId(tile.id)
         $("#settlement-stats").html("Productivity: "+settlements["productivity"][id]
             +"<br>Range: "+settlements["range"][id])
+        return
     }
     if (tile.classList.contains("ocean-tile")) {
         $("#settle").hide()
     }
     if (tile.classList.contains("claimed-tile")) {
         $("#claim-tile").hide()
+        if (tile.classList.contains("sand-tile") && 
+            !tile.classList.contains("dockyard-tile")) {
+            $("#build-dockyard").show()
+            $("#build-dockyard").html("Build Dockyard "
+                +getDockyardGoldCost()+" Gold "+getDockyardProductionCost()+"/"
+                +getDockyardProductionCost()+" Production")
+        }
     }
 
 
@@ -188,9 +208,22 @@ function tick() {
 function settle() {
     // Pass if lacking necessary resources
     if (goldCount < getSettlementCost()) {
-        console.log("Failed Claim: Lacking necessary resources")
+        console.log("Failed Settle: Lacking necessary resources")
         return
     }
+
+    // Pass if on top of building
+    if (JSON.stringify(buildings)
+        .indexOf(JSON.stringify(worldMap["cursor"])) >= 0) {
+        console.log("Failed Settle: Can't settle on top of buildings")
+        return
+    }
+
+    // Pass if ocean selected
+    if (getTerrainFromPos(...worldMap["cursor"]) == "ocean-tile") {
+        console.log("Failed Settle: Can't settle on water")
+    }
+
     goldCount -= getSettlementCost()
     
     settlements["position"].push(worldMap["cursor"])
@@ -278,6 +311,42 @@ function claimTile() {
     productionCount += yields[1]
     productionYield += yields[1]
     goldCount += yields[2]
+}
+
+function buildDockyard() {
+    // Pass if lacking necessary resources
+    if (goldCount < getDockyardGoldCost() || 
+        productionCount < getDockyardProductionCost() ||
+        productionYield < getDockyardProductionCost()) {
+        console.log("Failed Dockyard Build: Lacking necessary resources")
+        return
+    }
+
+    // Pass if on-top of another building
+    if (JSON.stringify(buildings)
+            .indexOf(JSON.stringify(worldMap["cursor"])) >= 0) {
+        console.log("Failed Dockyard Build: Can't build on top of buildings")
+        return
+    }
+
+    // Pass if no adjacent ocean
+    var adj = getAdjacentPos(...worldMap["cursor"])
+    for (var i = 0; i < adj.length; i++) {
+        if (getTerrainFromPos(...adj[i]) == "ocean-tile") {
+            break
+        }
+        if (i == adj.length-1) {
+            console.log("Failed Dockyard Build: No adjacent ocean")
+            return
+        }
+    }
+
+    goldCount -= getDockyardGoldCost()
+    productionCount -= getDockyardProductionCost()
+    productionYield -= getDockyardProductionCost()
+
+    buildings["dockyards"].push(worldMap["cursor"])
+    dockyardCount += 1
 }
 
 function modifyProductivity(v) {
@@ -457,6 +526,14 @@ function getTileFoodCost() {
 
 function getSettlementCost() {
     return goldCost + Math.pow(settlements["position"].length, 2)
+}
+
+function getDockyardGoldCost() {
+    return Math.pow(2, dockyardCount)
+}
+
+function getDockyardProductionCost() {
+    return dockyardCount
 }
 
 

@@ -22,6 +22,10 @@
     background-image: url("img/claim.png")
 }
 
+.dockyard-tile {
+    background-image: url("img/anchor.png")
+}
+
 .home-tile {
     background-image: url("img/home.png");
 }
