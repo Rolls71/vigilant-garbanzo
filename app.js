@@ -501,3 +501,39 @@ function isInSettlementRange(i, x, y) {
 function isInRange(x1, y1, x2, y2, range) {
     return (Math.sqrt( Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) ) <= range)
 }
+
+function isConnected(x1, y1, x2, y2) {
+    var claimsStr = JSON.stringify(claims)
+    if (claimsStr.indexOf([x1, y1]) < 0 || 
+        claimsStr.indexOf([x2, y2]) < 0) {
+        return false
+    }
+    
+    var searchList = getAdjacentPos(x1, y1)
+    var searched = []
+    var strClaims = JSON.stringify(claims)
+    while(Array.isArray(searchList) && searchList.length > 0) {
+        // search pos is claimed
+        var pos = searchList.pop()
+        searched.push(pos)
+        console.log("  "+pos)
+        if (strClaims.indexOf(JSON.stringify([pos[0], pos[1]])) < 0) {
+            continue
+        }
+
+        // target pos is found
+        if (pos[0] == x2 && pos[1] == y2) {
+            return true
+        }
+
+        // Add new adjacent positions to search
+        var adj = getAdjacentPos(pos[0], pos[1])
+        for (var i = 0; i < adj.length; i++) { 
+            if (JSON.stringify(searchList.concat(searched))
+                    .indexOf(JSON.stringify(adj[i])) < 0) {
+                searchList.push(adj[i])
+            }
+        }
+    }
+    return false
+}
