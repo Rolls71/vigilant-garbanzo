@@ -29,8 +29,9 @@ var settlements = {
     "productivity": [],
     "range": [],
 }
-var buildings = {
-    "dockyards": []
+var dockyards = {
+    "position": [],
+    "range": [],
 }
 var claims = []
 var worldMap = {}
@@ -111,9 +112,9 @@ function renderMap() {
                 .classList.add("claimed-tile")
         }
     }
-    for (var i = 0; i < buildings["dockyards"].length; i++) {
-        if (isOnScreen(...buildings["dockyards"][i])) {
-            $("#"+getTileIdFromWorld(...buildings["dockyards"][i]))[0]
+    for (var i = 0; i < dockyards["position"].length; i++) {
+        if (isOnScreen(...dockyards["position"][i])) {
+            $("#"+getTileIdFromWorld(...dockyards["position"][i]))[0]
                 .classList.add("dockyard-tile")
         }
     }
@@ -127,6 +128,8 @@ function renderPanels() {
     $("#selected-settlement").hide()
     $("#settlement-stats").hide()
     $("#build-dockyard").hide()
+    $("#increase-dock-range").hide()
+    $("#decrease-dock-range").hide()
     $("#increase-productivity").hide()
     $("#decrease-productivity").hide()
     $("#increase-range").hide()
@@ -173,6 +176,8 @@ function renderPanels() {
                     +getDockyardProductionCost()+" Production")
             } else {
                 $("#settle").hide()
+                $("#increase-dock-range").show()
+                $("#decrease-dock-range").show()
             }
         }
     }
@@ -217,7 +222,7 @@ function settle() {
     }
 
     // Pass if on top of building
-    if (JSON.stringify(buildings)
+    if (JSON.stringify(dockyards["position"])
         .indexOf(JSON.stringify(worldMap["cursor"])) >= 0) {
         console.log("Failed Settle: Can't settle on top of buildings")
         return
@@ -270,20 +275,10 @@ function claimTile() {
     var neighbours = getAdjacentPos(...worldMap["cursor"])
     for (var i = 0; i < neighbours.length; i++) {
         if (isClaimed(...neighbours[i])) {
-            // Pass if tile is deep ocean without dockyard
-            if (getTerrainFromPos(...worldMap["cursor"]) != "ocean-tile") {
-                break
-            }
-            if (getTerrainFromPos(...neighbours[i]) != "ocean-tile") {
-                break
-            }
+            break
         }
         if (i+1 == neighbours.length) {
-            if (getTerrainFromPos(...worldMap["cursor"]) == "ocean-tile") {
-                console.log("Failed Ocean Claim: No connected dockyard or adjacent land claims")
-            } else {
-                console.log("Failed Claim: No adjacent claims")
-            }
+            console.log("Failed Claim: No adjacent claims")
             return
         }
     }
@@ -302,6 +297,25 @@ function claimTile() {
         if (i+1 == settlements["position"].length) {
             console.log("Failed Claim: No settlement in range")
             return
+        }
+    }
+
+    // Pass if ocean tile out of range of dockyards
+    if (getTerrainFromPos(...worldMap["cursor"]) == "ocean-tile" &&
+        !isCoastal()) {
+        if (dockyards["position"].length == 0) {
+            console.log("Failed Ocean Claim: No dockyard in range")
+            return
+        }
+        for (var i = 0; i < dockyards["position"].length; i++) {
+            if (isInRange(...dockyards["position"][i], ...worldMap["cursor"],
+                dockyards["range"][i])) {
+                break
+            }
+            if (i+1 == dockyards["position"].length) {
+                console.log("Failed Ocean Claim: No dockyard in range")
+                return
+            }
         }
     }
 
@@ -346,7 +360,7 @@ function buildDockyard() {
     }
 
     // Pass if on-top of another building
-    if (JSON.stringify(buildings)
+    if (JSON.stringify(dockyards["position"])
             .indexOf(JSON.stringify(worldMap["cursor"])) >= 0) {
         console.log("Failed Dockyard Build: Can't build on top of buildings")
         return
@@ -355,7 +369,8 @@ function buildDockyard() {
     goldCount -= getDockyardGoldCost()
     productionCount -= getDockyardProductionCost()
 
-    buildings["dockyards"].push(worldMap["cursor"])
+    dockyards["position"].push(worldMap["cursor"])
+    dockyards["range"].push(MIN_RANGE)
     dockyardCount += 1
 }
 
@@ -620,6 +635,17 @@ function isConnected(x1, y1, x2, y2) {
                     .indexOf(JSON.stringify(adj[i])) < 0) {
                 searchList.push(adj[i])
             }
+        }
+    }
+    return false
+}
+
+function isCoastal() {
+    var neighbours = getAdjacentPos(...worldMap["cursor"])
+    for (var i = 0; i < neighbours.length; i++) {
+        if (getTerrainFromPos(...neighbours[i]) != "ocean-tile" &&
+            isClaimed(...neighbours[i])) {
+            return true
         }
     }
     return false
