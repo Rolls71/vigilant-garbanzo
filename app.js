@@ -49,7 +49,6 @@ var tileYields = {
 $(onStart()); 
 
 function onStart(){
-    console.log("Jquery!")
     renderMap()
     renderPanels()
 
