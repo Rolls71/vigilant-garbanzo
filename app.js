@@ -20,6 +20,7 @@ var goldCount = 0
 var dockyardCount = 0
 var tileCount = 0
 var goldCost = 0
+var tileFoodCost = 10
 
 var foodYield = 0
 var productionYield = 0
@@ -255,6 +256,7 @@ function settle() {
     foodYield += yields[0]
     productionCount += yields[1]
     goldCount += yields[2]
+    tileFoodCost = 10*settlements["position"].length
     
 }
 
@@ -333,6 +335,7 @@ function claimTile() {
     goldCount -= goldCost
     foodCount -= getTileFoodCost()
     tileCount += 1
+    tileFoodCost *= 2
 
     foodYield += yields[0]
     productionCount += yields[1]
@@ -545,12 +548,11 @@ function getSettlementFromTileId(id) {
 
 // Formulas
 function getTileFoodCost() {
-    return (Math.pow(2, tileCount)*TILE_FOOD_COST_MULTIPLIER*SETTLEMENT_TILE_COST_DIVISOR)/
-        (Math.pow(SETTLEMENT_TILE_COST_DIVISOR, settlements["position"].length))
+    return tileFoodCost
 }
 
 function getSettlementCost() {
-    return goldCost + Math.pow(settlements["position"].length, 2)
+    return goldCost + Math.pow(settlements["position"].length, 1)
 }
 
 function getDockyardGoldCost() {
